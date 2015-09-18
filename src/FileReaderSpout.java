@@ -15,6 +15,8 @@ import backtype.storm.tuple.Values;
 public class FileReaderSpout implements IRichSpout {
   private SpoutOutputCollector _collector;
   private TopologyContext context;
+  private FileReader _fr;
+  private BufferedReader _br;
 
 
   @Override
@@ -27,6 +29,16 @@ public class FileReaderSpout implements IRichSpout {
 
 
     ------------------------------------------------- */
+    try {
+        String fileName = conf.get("FileNameToUse").toString();
+        _fr = new FileReader(fileName);
+        _br = new BufferedReader(_fr);
+        
+    } catch (FileNotFoundException fe) {
+        ;
+    } catch (IOException ex) {
+        ;
+    }
 
     this.context = context;
     this._collector = collector;
@@ -42,7 +54,20 @@ public class FileReaderSpout implements IRichSpout {
     2. don't forget to sleep when the file is entirely read to prevent a busy-loop
 
     ------------------------------------------------- */
-
+    String nextLine;
+    try {
+        while ((nextLine = _br.readLine()) != null) {
+            _collector.emit(new Values(nextLine));
+        }
+    } catch (IOException ex) {
+        ;
+    } 
+    // Assuming the program runs for a max of 2 minutes
+    try {
+        Thread.sleep(2 * 60 * 1000);
+    } catch (InterruptedException ie) {
+        ;
+    }
 
   }
 
@@ -61,7 +86,12 @@ public class FileReaderSpout implements IRichSpout {
 
 
     ------------------------------------------------- */
-
+    try {
+        _br.close();
+        _fr.close();
+    } catch (IOException ex) {
+        ;
+    } 
   }
 
 
